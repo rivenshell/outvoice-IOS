@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="e" data-name="icon light bg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <defs>
+    <style>
+      .h {
+        fill: #231f20;
+        stroke: #231f20;
+      }
+
+      .i {
+        font-family: Inter-Bold, Inter;
+        font-size: 44.14px;
+        font-variation-settings: 'wght' 700, 'slnt' 0;
+        font-weight: 700;
+      }
+    </style>
+  </defs>
+  <g id="f" data-name="O">
+    <path class="h" d="M264.48,232.38s-161.83.76-172.52,38.17c-10.69,37.4,166.41,84.73,304.58,60.3,0,0-321.37-15.27-132.06-98.47Z"/>
+    <path class="h" d="M284.33,301.08s205.34-3.05,212.21-39.69c6.87-36.64-39.69-74.81-332.82-61.07,0,0,197.71.19,222.13,48.95s-101.53,51.81-101.53,51.81Z"/>
+  </g>
+  <text class="i" transform="translate(211.81 416.08)"><tspan x="0" y="0">Outvoice</tspan></text>
+</svg>
