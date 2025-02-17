@@ -19,7 +19,6 @@ struct ContentView: View {
                     Label("Home", systemImage: "house.fill")
                 }
                 .tag(Tab.first)
-                .tint(navigationState.selectedTab == Tab.first ? .green : .black)
             InvoiceView()
                 .tabItem {
                     Label("Invoice", systemImage: "text.page.fill")
@@ -32,7 +31,10 @@ struct ContentView: View {
                 .tag(Tab.third)
         }
 //        .padding()
+        // active color
+        .tint(.green)
         
+        .foregroundStyle(.black)
         .environmentObject(navigationState)
     }
 }

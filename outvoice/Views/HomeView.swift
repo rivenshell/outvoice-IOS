@@ -15,13 +15,19 @@ struct HomeView: View {
             VStack {
                 Text("I will add my content here")
                 
+                
                 //more content here
             }
-            .navigationTitle("Home")
+//            .navigationTitle("Home")
         }
     }
 }
 
 #Preview {
     HomeView()
+        .environmentObject({
+            let state = NavigationState()
+            state.selectedTab = .first
+            return state
+        }())
 }
