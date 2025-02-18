@@ -14,7 +14,7 @@ struct HomeView: View {
         NavigationStack(path: $navigationState.firstViewPath) {
             VStack {
                 Text("I will add my content here")
-                
+                Text("Find a way")
                 
                 //more content here
             }
