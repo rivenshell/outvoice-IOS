@@ -13,6 +13,14 @@ struct HomeView: View {
     var body: some View {
         NavigationStack(path: $navigationState.firstViewPath) {
             VStack {
+                HStack {
+                    Image("logo-svg")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 120, height: 100)
+                    Spacer()
+                }
+                .padding(.horizontal)
                 Text("I will add my content here")
                 Text("Find a way")
                 
