@@ -16,6 +16,7 @@ final class OnboardingState: ObservableObject {
     // fix this
     init(items: [OnboardingItem] = OnboardingItem.defaultItems) {
         self.items = items
+        // update
     }
     
 }

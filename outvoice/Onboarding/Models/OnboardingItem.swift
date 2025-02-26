@@ -7,7 +7,7 @@
 
 import Foundation
 
-//data model (for rach pg)
+//data model (for each pageg)
 struct OnboardingItem: Identifiable, Equatable {
     let id = UUID()
     let title: String
