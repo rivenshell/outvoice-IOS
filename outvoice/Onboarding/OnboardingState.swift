@@ -19,4 +19,18 @@ final class OnboardingState: ObservableObject {
         // update
     }
     
+    var isLastPage: Bool {
+        currentPage == items.count - 1
+    }
+    
+    func advance() {
+        guard currentPage < items.count - 1 else { return }
+        currentPage += 1
+    }
+    
+    func goTO(_ page: Int) {
+        guard page >= 0 && page < items.count else { return }
+        currentPage = page
+    }
+    
 }
