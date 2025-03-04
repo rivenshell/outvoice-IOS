@@ -22,7 +22,7 @@ final class OnboardingState: ObservableObject {
     var isLastPage: Bool {
         currentPage == items.count - 1
     }
-    
+    // navigating to pages
     func advance() {
         guard currentPage < items.count - 1 else { return }
         currentPage += 1

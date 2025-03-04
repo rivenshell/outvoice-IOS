@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+// this page is your MVP
 struct InvoiceView: View {
     var body: some View {
         Text("Lets re-imagine Invoicing Together!")
