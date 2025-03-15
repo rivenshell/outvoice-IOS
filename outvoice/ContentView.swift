@@ -30,11 +30,8 @@ struct ContentView: View {
                 }
                 .tag(Tab.third)
         }
-//        .padding()
-        // active color
-        .tint(.green)
         
-        .foregroundStyle(.black)
+        .tint(.green)
         .environmentObject(navigationState)
     }
 }

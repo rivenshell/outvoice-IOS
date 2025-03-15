@@ -8,7 +8,7 @@
 import SwiftUI
 
 class NavigationState: ObservableObject {
-    @Published var selectedTab: Tab = .first
+    @Published var selectedTab: Tab = .second
     
     //add any addition navigation states
     // Explicitly define the navigationPath as a Binding
