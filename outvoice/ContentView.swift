@@ -11,12 +11,27 @@ import CoreData
 struct ContentView: View {
     @StateObject private var navigationState = NavigationState()
     
+    
     // main view
     var body: some View {
         TabView(selection: $navigationState.selectedTab) {
             HomeView()
                 .tabItem {
-                    Label("Home", systemImage: "house.fill")
+                    Label {
+                        Text("Home")
+                            .foregroundColor(.gray)
+                    } icon: {
+                        Image(systemName: "house")
+                            .foregroundColor(.gray)
+                    }
+                }
+                .tag(Tab.first)
+                .opacity(0.1)   // Make it look disabled
+                .onChange(of: navigationState.selectedTab) { oldValue, newValue in
+                    if newValue == .first {
+                        // Redirect to Invoice tab
+                        navigationState.selectedTab = .second
+                    }
                 }
                 .tag(Tab.first)
             InvoiceView()

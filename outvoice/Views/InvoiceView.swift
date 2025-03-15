@@ -22,15 +22,19 @@ struct InvoiceView: View {
                     invoiceListView
                 }
             }
+            .padding(.top)
 //            .navigationTitle("Invoices")
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
+                    
                     Image("logo-svg")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 120, height: 1000)
-                        .padding(.top, 40)
+                        .frame(width: 90, height: 200)
+                        .padding(.top, 10)
                         .padding(.bottom, 20)
+                        .padding(.leading)
+                    
                 }
             }
             .sheet(isPresented: $showingAddInvoice) {
@@ -39,6 +43,7 @@ struct InvoiceView: View {
                     showingAddInvoice = false
                 })
             }
+//            .padding(.top, 0)
             .searchable(text: $searchText, prompt: "Search invoices")
         }
     }
@@ -49,7 +54,7 @@ struct InvoiceView: View {
                 .font(.system(size: 70))
                 .foregroundColor(.gray)
             
-            Text("No Invoices Yet")
+            Text("Bummer.. No Invoices")
                 .font(.title2)
                 .fontWeight(.bold)
             
@@ -66,6 +71,7 @@ struct InvoiceView: View {
             .foregroundColor(.white)
             .cornerRadius(10)
             .padding(.top)
+            .bold()
         }
         .padding()
     }
