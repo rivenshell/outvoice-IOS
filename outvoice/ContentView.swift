@@ -26,6 +26,7 @@ struct ContentView: View {
                     }
                 }
                 .tag(Tab.first)
+            // disables home
                 .opacity(0.1)   // Make it look disabled
                 .onChange(of: navigationState.selectedTab) { oldValue, newValue in
                         if newValue == .first {
