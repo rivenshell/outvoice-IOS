@@ -23,7 +23,6 @@ struct InvoiceView: View {
                 }
             }
             .padding(.top)
-//            .navigationTitle("Invoices")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     
@@ -31,6 +30,7 @@ struct InvoiceView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 90, height: 200)
+                        .foregroundColor(Color(UIColor.label))
                         .padding(.top, 10)
                         .padding(.bottom, 20)
                         .padding(.leading)

@@ -28,12 +28,11 @@ struct ContentView: View {
                 .tag(Tab.first)
                 .opacity(0.1)   // Make it look disabled
                 .onChange(of: navigationState.selectedTab) { oldValue, newValue in
-                    if newValue == .first {
-                        // Redirect to Invoice tab
-                        navigationState.selectedTab = .second
-                    }
-                }
-                .tag(Tab.first)
+                        if newValue == .first {
+                            // Redirect to Invoice tab
+                            navigationState.selectedTab = .second
+                            }
+                        }
             InvoiceView()
                 .tabItem {
                     Label("Invoice", systemImage: "text.page.fill")

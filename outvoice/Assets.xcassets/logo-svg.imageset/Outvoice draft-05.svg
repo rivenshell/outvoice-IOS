@@ -3,8 +3,8 @@
   <defs>
     <style>
       .h {
-        fill: #231f20;
-        stroke: #231f20;
+        fill: currentColor;
+        stroke: currentColor;
       }
 
       .i {
@@ -12,6 +12,7 @@
         font-size: 44.14px;
         font-variation-settings: 'wght' 700, 'slnt' 0;
         font-weight: 700;
+        fill: currentColor;
       }
     </style>
   </defs>
