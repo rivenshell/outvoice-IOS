@@ -48,6 +48,8 @@ struct InvoiceView: View {
         }
     }
     
+    
+    // att "+" button to enable users to add new invoices
     private var emptyStateView: some View {
         VStack(spacing: 20) {
             Image(systemName: "doc.text.magnifyingglass")
