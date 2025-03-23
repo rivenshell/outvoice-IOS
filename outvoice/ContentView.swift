@@ -20,22 +20,23 @@ struct ContentView: View {
     var body: some View {
         TabView(selection: $navigationState.selectedTab) {
             HomeView()
+                .opacity(0.1)   // Apply opacity directly to HomeView
                 .tabItem {
                     Label {
                         Text("Home")
+                            .foregroundStyle(.tertiary) // Makes text appear disabled
                     } icon: {
                         Image(systemName: "house")
+                            .foregroundStyle(.tertiary) // Makes icon appear disabled
                     }
                 }
                 .tag(Tab.first)
-            // disables home
-                .opacity(0.1)   // Make it look disabled
                 .onChange(of: navigationState.selectedTab) { oldValue, newValue in
-                        if newValue == .first {
-                            // Redirect to Invoice tab
-                            navigationState.selectedTab = .second
-                            }
-                        }
+                    if newValue == .first {
+                        // Redirect to Invoice tab
+                        navigationState.selectedTab = .second
+                    }
+                }
             InvoiceView()
                 .tabItem {
                     Label("Invoice", systemImage: "text.page.fill")

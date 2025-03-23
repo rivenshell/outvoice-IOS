@@ -12,17 +12,37 @@ struct InvoiceView: View {
     @State private var invoices: [Invoice] = []
     @State private var showingAddInvoice = false
     @State private var searchText = ""
+    @State private var showingSignIn = false
     
     var body: some View {
         NavigationStack {
             VStack {
-                // Add greeting under logo
-                Text("Hi, User")
-                    .font(.system(size: 32))
-                    .fontWeight(.bold)
-                    .foregroundColor(.black)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.bottom, invoices.isEmpty ? 160 : 20)
+                // Add greeting and sign-in button
+                HStack {
+                    Text("Hi, Riv")
+                        .font(.system(size: 32))
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        showingSignIn = true
+                    }) {
+                        Text("Sign In")
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, invoices.isEmpty ? 100 : 20)
+                .padding(.leading, 10)
+                .padding(.trailing, 10)
+                .padding(.top, -120)
                 
                 if invoices.isEmpty {
                     emptyStateView
@@ -52,10 +72,15 @@ struct InvoiceView: View {
                     showingAddInvoice = false
                 })
             }
+            .sheet(isPresented: $showingSignIn) {
+                SignInView(onClose: {
+                    showingSignIn = false
+                })
+            }
             .searchable(text: $searchText, prompt: "Search invoices")
         }
         // Adjust width to be 75% of screen width
-        .frame(width: UIScreen.main.bounds.width * 0.85)
+        .frame(width: UIScreen.main.bounds.width * 0.90)
         .padding()
     }
     
@@ -80,7 +105,7 @@ struct InvoiceView: View {
                 showingAddInvoice = true
             }
             .padding()
-            .background(Color.green)
+            .background(Color.black)
             .foregroundColor(.white)
             .cornerRadius(10)
             .padding(.top)
@@ -349,6 +374,77 @@ enum InvoiceStatus: String, CaseIterable, Identifiable {
     case overdue = "Overdue"
     
     var id: String { self.rawValue }
+}
+
+// Add the SignInView
+struct SignInView: View {
+    @State private var email = ""
+    @State private var password = ""
+    var onClose: () -> Void
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Image("logo-svg")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 120, height: 120)
+                    .padding(.bottom, 20)
+                
+                Text("Welcome Back")
+                    .font(.title)
+                    .fontWeight(.bold)
+                
+                VStack(spacing: 15) {
+                    TextField("Email", text: $email)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
+                        .autocapitalization(.none)
+                        .keyboardType(.emailAddress)
+                    
+                    SecureField("Password", text: $password)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
+                    
+                    Button(action: {
+                        // Sign in logic would go here
+                        // For now, just close the sheet
+                        onClose()
+                    }) {
+                        Text("Sign In")
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+                    .padding(.top)
+                    
+                    Button("Forgot Password?") {
+                        // Forgot password logic would go here
+                    }
+                    .foregroundColor(.blue)
+                    .padding(.top, 5)
+                }
+                .padding(.horizontal)
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Sign In")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cancel") {
+                        onClose()
+                    }
+                }
+            }
+        }
+    }
 }
 
 // Preview provider
