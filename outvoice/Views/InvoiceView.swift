@@ -16,13 +16,23 @@ struct InvoiceView: View {
     var body: some View {
         NavigationStack {
             VStack {
+                // Add greeting under logo
+                Text("Hi, User")
+                    .font(.system(size: 48))
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    // .padding(.horizontal, 30)
+                    .padding(.bottom, 20)
+                
                 if invoices.isEmpty {
                     emptyStateView
                 } else {
                     invoiceListView
                 }
             }
-            .padding(.top)
+            // .padding(.top)
+            .padding()
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     
@@ -43,9 +53,10 @@ struct InvoiceView: View {
                     showingAddInvoice = false
                 })
             }
-//            .padding(.top, 0)
             .searchable(text: $searchText, prompt: "Search invoices")
         }
+        // Adjust width to be 75% of screen width
+        .frame(width: UIScreen.main.bounds.width * 0.85)
     }
     
     
