@@ -11,6 +11,10 @@ import CoreData
 struct ContentView: View {
     @StateObject private var navigationState = NavigationState()
     
+    init() {
+        // Configure the appearance of inactive tab items
+        UITabBar.appearance().unselectedItemTintColor = UIColor.darkGray
+    }
     
     // main view
     var body: some View {
@@ -19,10 +23,8 @@ struct ContentView: View {
                 .tabItem {
                     Label {
                         Text("Home")
-                            .foregroundColor(.gray)
                     } icon: {
                         Image(systemName: "house")
-                            .foregroundColor(.gray)
                     }
                 }
                 .tag(Tab.first)

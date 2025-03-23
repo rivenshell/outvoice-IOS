@@ -18,12 +18,11 @@ struct InvoiceView: View {
             VStack {
                 // Add greeting under logo
                 Text("Hi, User")
-                    .font(.system(size: 48))
+                    .font(.system(size: 32))
                     .fontWeight(.bold)
                     .foregroundColor(.black)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    // .padding(.horizontal, 30)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, invoices.isEmpty ? 160 : 20)
                 
                 if invoices.isEmpty {
                     emptyStateView
@@ -57,6 +56,7 @@ struct InvoiceView: View {
         }
         // Adjust width to be 75% of screen width
         .frame(width: UIScreen.main.bounds.width * 0.85)
+        .padding()
     }
     
     
@@ -64,7 +64,7 @@ struct InvoiceView: View {
     private var emptyStateView: some View {
         VStack(spacing: 20) {
             Image(systemName: "doc.text.magnifyingglass")
-                .font(.system(size: 70))
+                .font(.system(size: 54))
                 .foregroundColor(.gray)
             
             Text("Bummer.. No Invoices")
