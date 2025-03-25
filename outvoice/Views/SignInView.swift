@@ -140,7 +140,7 @@ class AuthViewModel: ObservableObject {
                 createdAt: Date()
             )
         }
-        
+        // tes
         return try await authService.signIn(email: email, password: password)
     }
 }
