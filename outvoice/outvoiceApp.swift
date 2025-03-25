@@ -10,11 +10,13 @@ import SwiftUI
 @main
 struct outvoiceApp: App {
     let persistenceController = PersistenceController.shared
+    @StateObject private var authService = AuthService()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .environmentObject(authService)
         }
     }
 }

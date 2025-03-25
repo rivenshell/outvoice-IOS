@@ -13,36 +13,15 @@ struct InvoiceView: View {
     @State private var showingAddInvoice = false
     @State private var searchText = ""
     @State private var showingSignIn = false
+    @EnvironmentObject var authService: AuthService
     
     var body: some View {
         NavigationStack {
             VStack {
-                // Add greeting and sign-in button
-                HStack {
-                    Text("Hi, Riv")
-                        .font(.system(size: 32))
-                        .fontWeight(.bold)
-                        .foregroundColor(.black)
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        showingSignIn = true
-                    }) {
-                        Text("Sign In")
-                            .fontWeight(.semibold)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, invoices.isEmpty ? 100 : 20)
-                .padding(.leading, 10)
-                .padding(.trailing, 10)
-                .padding(.top, -120)
+                // Use the reusable component
+                AuthHeaderView(showingSignIn: $showingSignIn)
+                    .withAuthHeaderStyle()
+                    .padding(.top, -120)
                 
                 if invoices.isEmpty {
                     emptyStateView
@@ -50,7 +29,6 @@ struct InvoiceView: View {
                     invoiceListView
                 }
             }
-            // .padding(.top)
             .padding()
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -73,7 +51,7 @@ struct InvoiceView: View {
                 })
             }
             .sheet(isPresented: $showingSignIn) {
-                SignInView(onClose: {
+                InvoiceSignInView(onClose: {
                     showingSignIn = false
                 })
             }
@@ -376,8 +354,8 @@ enum InvoiceStatus: String, CaseIterable, Identifiable {
     var id: String { self.rawValue }
 }
 
-// Add the SignInView
-struct SignInView: View {
+// Add the InvoiceSignInView
+struct InvoiceSignInView: View {
     @State private var email = ""
     @State private var password = ""
     var onClose: () -> Void
