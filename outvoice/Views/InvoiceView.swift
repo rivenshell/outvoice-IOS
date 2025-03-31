@@ -5,6 +5,34 @@
 //  Created by Riv Sal on 2/16/25.
 //
 
+//
+/*
+    Out of dade.
+    Current
+    V0.1 Q1 2025
+    
+    New
+    V0.2 Q2 2025
+    - Add Supabase Auth
+    - Add Supabase Database
+    - Add Supabase Storage
+    - Add Supabase Functions
+    - Add Supabase Realtime
+    - Add Supabase Edge Functions
+    - Add Supabase Notifications
+    - Add Supabase Email
+    - Add Supabase SMS
+
+
+ 
+ */
+
+
+
+
+
+
+
 import SwiftUI
 import PDFKit
 
