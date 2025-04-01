@@ -17,13 +17,22 @@ class AuthService: AuthServiceProtocol, ObservableObject {
     // Use optional for Supabase client to avoid crashes in previews
     private let supabase: SupabaseClient?
     
+    // Add a method to access the Supabase client
+    func getSupabaseClient() -> SupabaseClient? {
+        return supabase
+    }
+    
     init() {
-        // Safe initialization with proper error handling
-        if let supabaseURL = URL(string: "YOUR_SUPABASE_URL"),
-           !supabaseURL.absoluteString.contains("YOUR_SUPABASE_URL") {
+        // Load credentials from a configuration plist file
+        if let supabaseConfig = loadSupabaseConfig(),
+           let urlString = supabaseConfig["SUPABASE_URL"] as? String,
+           let key = supabaseConfig["SUPABASE_KEY"] as? String,
+           let url = URL(string: urlString),
+           !key.isEmpty {
+            
             self.supabase = SupabaseClient(
-                supabaseURL: supabaseURL,
-                supabaseKey: "YOUR_SUPABASE_KEY"
+                supabaseURL: url,
+                supabaseKey: key
             )
             
             // Only refresh session if we have a valid client
@@ -34,6 +43,27 @@ class AuthService: AuthServiceProtocol, ObservableObject {
             // For previews or development, use nil client
             self.supabase = nil
         }
+    }
+    
+    // Load Supabase configuration from plist
+    private func loadSupabaseConfig() -> [String: Any]? {
+        // Try to load from SupabaseConfig.plist first (not in version control)
+        if let path = Bundle.main.path(forResource: "SupabaseConfig", ofType: "plist"),
+           let config = NSDictionary(contentsOfFile: path) as? [String: Any] {
+            return config
+        }
+        
+        // Fallback to Info.plist for development/previews
+        guard let infoDictionary = Bundle.main.infoDictionary else {
+            return nil
+        }
+        
+        let config: [String: Any] = [
+            "SUPABASE_URL": infoDictionary["SUPABASE_URL"] as? String ?? "",
+            "SUPABASE_KEY": infoDictionary["SUPABASE_KEY"] as? String ?? ""
+        ]
+        
+        return config
     }
     
     // Convenience initializer for mocking and previews
@@ -58,15 +88,20 @@ class AuthService: AuthServiceProtocol, ObservableObject {
             return mockUser
         }
         
-        let session = try await supabase.auth.signIn(
+        // Call Supabase Auth API to sign in
+        let authResponse = try await supabase.auth.signIn(
             email: email,
             password: password
         )
         
-        let user = try await fetchUserProfile(userId: session.user.id)
+        // Fetch the user's profile from the profiles table
+        let user = try await fetchUserProfile(userId: authResponse.user.id)
+        
+        // Update the current user on the main thread
         await MainActor.run {
             self.currentUser = user
         }
+        
         return user
     }
     
@@ -91,14 +126,16 @@ class AuthService: AuthServiceProtocol, ObservableObject {
             return currentUser
         }
         
+        // Check if there's an active session
         if let session = try? await supabase.auth.session {
-            // Session exists, we'll consider it valid
+            // Session exists, fetch the user profile
             let user = try await fetchUserProfile(userId: session.user.id)
             await MainActor.run {
                 self.currentUser = user
             }
             return user
         }
+        
         return nil
     }
     
@@ -111,16 +148,65 @@ class AuthService: AuthServiceProtocol, ObservableObject {
             throw NSError(domain: "AuthService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Supabase client not initialized"])
         }
         
-        // Fetch additional user data from your profiles table
+        // Fetch the user's profile from the profiles table
         let response = try await supabase
             .from("profiles")
             .select()
-            .eq("id", value: userId.uuidString)  // Convert to string only for the database query
+            .eq("id", value: userId.uuidString)
             .single()
             .execute()
         
+        // Decode the response into a User object
         let decoder = JSONDecoder()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+        
         let userData = try decoder.decode(User.self, from: response.data)
         return userData
+    }
+    
+    // Function to create a new user (sign up)
+    func signUp(email: String, password: String, firstName: String, lastName: String) async throws -> User {
+        guard let supabase = supabase else {
+            // For preview/testing, return mock user
+            let mockUser = User(
+                id: UUID(),
+                email: email,
+                firstName: firstName,
+                lastName: lastName,
+                createdAt: Date()
+            )
+            await MainActor.run {
+                self.currentUser = mockUser
+            }
+            return mockUser
+        }
+        
+        // Create a new user in Supabase Auth
+        let authResponse = try await supabase.auth.signUp(
+            email: email,
+            password: password
+        )
+        
+        // Update the user's profile with first and last name
+        try await supabase
+            .from("profiles")
+            .update([
+                "first_name": firstName,
+                "last_name": lastName
+            ])
+            .eq("id", value: authResponse.user.id.uuidString)
+            .execute()
+        
+        // Fetch the complete user profile
+        let user = try await fetchUserProfile(userId: authResponse.user.id)
+        
+        // Update the current user on the main thread
+        await MainActor.run {
+            self.currentUser = user
+        }
+        
+        return user
     }
 } 

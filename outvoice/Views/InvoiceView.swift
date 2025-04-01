@@ -41,7 +41,10 @@ struct InvoiceView: View {
     @State private var showingAddInvoice = false
     @State private var searchText = ""
     @State private var showingSignIn = false
+    @State private var isLoading = false
+    @State private var errorMessage: String? = nil
     @EnvironmentObject var authService: AuthService
+    @StateObject private var invoiceService = InvoiceService(supabase: nil) // Will be initialized in onAppear
     
     var body: some View {
         NavigationStack {
@@ -51,7 +54,14 @@ struct InvoiceView: View {
                     .withAuthHeaderStyle()
                     .padding(.top, -120)
                 
-                if invoices.isEmpty {
+                if isLoading {
+                    ProgressView("Loading invoices...")
+                        .padding()
+                } else if let error = errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .padding()
+                } else if invoices.isEmpty {
                     emptyStateView
                 } else {
                     invoiceListView
@@ -60,7 +70,6 @@ struct InvoiceView: View {
             .padding()
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    
                     Image("logo-svg")
                         .resizable()
                         .scaledToFit()
@@ -69,21 +78,44 @@ struct InvoiceView: View {
                         .padding(.top, 10)
                         .padding(.bottom, 20)
                         .padding(.leading)
-                    
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    if authService.isAuthenticated {
+                        Button(action: {
+                            showingAddInvoice = true
+                        }) {
+                            Image(systemName: "plus")
+                        }
+                    }
                 }
             }
             .sheet(isPresented: $showingAddInvoice) {
                 AddInvoiceView(onSave: { newInvoice in
-                    invoices.append(newInvoice)
-                    showingAddInvoice = false
+                    addInvoice(newInvoice)
                 })
             }
             .sheet(isPresented: $showingSignIn) {
                 InvoiceSignInView(onClose: {
                     showingSignIn = false
+                    // Refresh invoices after signing in
+                    if authService.isAuthenticated {
+                        loadInvoices()
+                    }
                 })
             }
             .searchable(text: $searchText, prompt: "Search invoices")
+            .onAppear {
+                // Initialize the InvoiceService with the Supabase client from AuthService
+                if let supabase = authService.getSupabaseClient() {
+                    invoiceService = InvoiceService(supabase: supabase)
+                }
+                
+                // Load invoices when the view appears
+                if authService.isAuthenticated {
+                    loadInvoices()
+                }
+            }
         }
         // Adjust width to be 75% of screen width
         .frame(width: UIScreen.main.bounds.width * 0.90)
@@ -143,8 +175,71 @@ struct InvoiceView: View {
         }
     }
     
+    // MARK: - Data Operations
+    
+    private func loadInvoices() {
+        guard authService.isAuthenticated else {
+            invoices = []
+            return
+        }
+        
+        isLoading = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                let fetchedInvoices = try await invoiceService.fetchInvoices()
+                await MainActor.run {
+                    invoices = fetchedInvoices
+                    isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to load invoices: \(error.localizedDescription)"
+                    isLoading = false
+                }
+            }
+        }
+    }
+    
+    private func addInvoice(_ invoice: Invoice) {
+        // Add the invoice to the local array first for immediate UI feedback
+        invoices.append(invoice)
+        showingAddInvoice = false
+        
+        // Save to Supabase
+        Task {
+            do {
+                let savedInvoice = try await invoiceService.createInvoice(invoice)
+                await MainActor.run {
+                    // Update the local array with the saved invoice (which has the correct ID from Supabase)
+                    if let index = invoices.firstIndex(where: { $0.id == invoice.id }) {
+                        invoices[index] = savedInvoice
+                    }
+                }
+            } catch {
+                print("Error saving invoice: \(error.localizedDescription)")
+                // You could show an error message here if desired
+            }
+        }
+    }
+    
     private func deleteInvoice(at offsets: IndexSet) {
+        // Remove from local array first for immediate UI feedback
+        let idsToDelete = offsets.map { invoices[$0].id }
         invoices.remove(atOffsets: offsets)
+        
+        // Delete from Supabase
+        Task {
+            for id in idsToDelete {
+                do {
+                    try await invoiceService.deleteInvoice(id: id)
+                } catch {
+                    print("Error deleting invoice: \(error.localizedDescription)")
+                    // You could show an error message here if desired
+                }
+            }
+        }
     }
 }
 
@@ -456,4 +551,5 @@ struct InvoiceSignInView: View {
 // Preview provider
 #Preview {
     InvoiceView()
+        .environmentObject(AuthService(mockUser: nil))
 }
