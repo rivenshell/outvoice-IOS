@@ -1,3 +1,9 @@
+
+-- This is the schema for the Supabase database.
+-- DOCUMENTATION
+
+
+
 -- Create profiles table that extends the auth.users table
 create table public.profiles (
   id uuid references auth.users on delete cascade not null primary key,
