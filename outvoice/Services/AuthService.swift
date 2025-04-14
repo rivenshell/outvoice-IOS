@@ -72,6 +72,7 @@ class AuthService: AuthServiceProtocol, ObservableObject {
         self.supabase = nil
     }
     
+    @MainActor
     func signIn(email: String, password: String) async throws -> User {
         guard let supabase = supabase else {
             // For preview/testing, return mock user
@@ -82,27 +83,27 @@ class AuthService: AuthServiceProtocol, ObservableObject {
                 lastName: "User",
                 createdAt: Date()
             )
-            await MainActor.run {
-                self.currentUser = mockUser
-            }
+            self.currentUser = mockUser
             return mockUser
         }
         
-        // Call Supabase Auth API to sign in
-        let authResponse = try await supabase.auth.signIn(
-            email: email,
-            password: password
-        )
-        
-        // Fetch the user's profile from the profiles table
-        let user = try await fetchUserProfile(userId: authResponse.user.id)
-        
-        // Update the current user on the main thread
-        await MainActor.run {
+        do {
+            // Call Supabase Auth API to sign in
+            let authResponse = try await supabase.auth.signIn(
+                email: email,
+                password: password
+            )
+            
+            // Fetch the user's profile from the profiles table
+            let user = try await fetchUserProfile(userId: authResponse.user.id)
+            
+            // Update the current user directly (we're already on MainActor)
             self.currentUser = user
+            return user
+        } catch {
+            // Transform and throw specific errors
+            throw AuthError.signInFailed(underlying: error)
         }
-        
-        return user
     }
     
     func signOut() async throws {
