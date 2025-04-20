@@ -37,21 +37,28 @@ import SwiftUI
 import PDFKit
 
 struct InvoiceView: View {
-    @State private var invoices: [Invoice] = []
     @State private var showingAddInvoice = false
     @State private var searchText = ""
     @State private var showingSignIn = false
+    
     @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var invoiceService: InvoiceService
+    
+    @State private var fetchError: String?
+    @State private var operationError: String?
     
     var body: some View {
         NavigationStack {
             VStack {
-                // Use the reusable component
                 AuthHeaderView(showingSignIn: $showingSignIn)
                     .withAuthHeaderStyle()
                     .padding(.top, -120)
                 
-                if invoices.isEmpty {
+                if let fetchError = fetchError {
+                    Text("Error loading invoices: \(fetchError)")
+                        .foregroundColor(.red)
+                        .padding()
+                } else if invoiceService.invoices.isEmpty && fetchError == nil {
                     emptyStateView
                 } else {
                     invoiceListView
@@ -74,24 +81,37 @@ struct InvoiceView: View {
             }
             .sheet(isPresented: $showingAddInvoice) {
                 AddInvoiceView(onSave: { newInvoice in
-                    invoices.append(newInvoice)
-                    showingAddInvoice = false
+                    Task {
+                        do {
+                            try await invoiceService.addInvoice(newInvoice)
+                            showingAddInvoice = false
+                            operationError = nil
+                        } catch {
+                            print("Error adding invoice: \(error)")
+                            operationError = "Failed to add invoice: \(error.localizedDescription)"
+                        }
+                    }
                 })
             }
             .sheet(isPresented: $showingSignIn) {
-                InvoiceSignInView(onClose: {
-                    showingSignIn = false
-                })
+                AuthView(onClose: { showingSignIn = false })
+                    .environmentObject(authService)
             }
             .searchable(text: $searchText, prompt: "Search invoices")
         }
-        // Adjust width to be 75% of screen width
         .frame(width: UIScreen.main.bounds.width * 0.90)
         .padding()
+        .task(id: authService.currentUser?.id) {
+            await loadInvoices()
+        }
+        .alert("Operation Failed", isPresented: Binding(get: { operationError != nil }, set: { if !$0 { operationError = nil } }), actions: { 
+            Button("OK") { operationError = nil }
+        }, message: { 
+            Text(operationError ?? "An unknown error occurred.")
+        })
     }
     
     
-    // att "+" button to enable users to add new invoices
     private var emptyStateView: some View {
         VStack(spacing: 20) {
             Image(systemName: "doc.text.magnifyingglass")
@@ -132,10 +152,12 @@ struct InvoiceView: View {
     }
     
     private var filteredInvoices: [Invoice] {
+        let sourceInvoices = invoiceService.invoices
+        
         if searchText.isEmpty {
-            return invoices
+            return sourceInvoices
         } else {
-            return invoices.filter { invoice in
+            return sourceInvoices.filter { invoice in
                 invoice.clientName.localizedCaseInsensitiveContains(searchText) ||
                 invoice.invoiceNumber.localizedCaseInsensitiveContains(searchText) ||
                 String(format: "%.2f", invoice.amount).contains(searchText)
@@ -144,7 +166,25 @@ struct InvoiceView: View {
     }
     
     private func deleteInvoice(at offsets: IndexSet) {
-        invoices.remove(atOffsets: offsets)
+        Task {
+            do {
+                try await invoiceService.deleteInvoice(at: offsets)
+                operationError = nil
+            } catch {
+                print("Error deleting invoice: \(error)")
+                operationError = "Failed to delete invoice: \(error.localizedDescription)"
+            }
+        }
+    }
+    
+    private func loadInvoices() async {
+        fetchError = nil
+        do {
+            try await invoiceService.fetchInvoices()
+        } catch {
+            print("Error fetching invoices in view: \(error)")
+            fetchError = error.localizedDescription
+        }
     }
 }
 
@@ -363,7 +403,7 @@ struct PDFPreviewView: View {
 }
 
 // Model Definitions
-struct Invoice: Identifiable {
+struct Invoice: Identifiable, Codable {
     let id: UUID
     let clientName: String
     let invoiceNumber: String
@@ -371,9 +411,19 @@ struct Invoice: Identifiable {
     let status: InvoiceStatus
     let dueDate: Date
     let createdDate: Date
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case clientName = "client_name"
+        case invoiceNumber = "invoice_number"
+        case amount
+        case status
+        case dueDate = "due_date"
+        case createdDate = "created_date"
+    }
 }
 
-enum InvoiceStatus: String, CaseIterable, Identifiable {
+enum InvoiceStatus: String, CaseIterable, Identifiable, Codable {
     case draft = "Draft"
     case sent = "Sent"
     case paid = "Paid"
@@ -382,78 +432,9 @@ enum InvoiceStatus: String, CaseIterable, Identifiable {
     var id: String { self.rawValue }
 }
 
-// Add the InvoiceSignInView
-struct InvoiceSignInView: View {
-    @State private var email = ""
-    @State private var password = ""
-    var onClose: () -> Void
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Image("logo-svg")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 120, height: 120)
-                    .padding(.bottom, 20)
-                
-                Text("Welcome Back")
-                    .font(.title)
-                    .fontWeight(.bold)
-                
-                VStack(spacing: 15) {
-                    TextField("Email", text: $email)
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
-                        .autocapitalization(.none)
-                        .keyboardType(.emailAddress)
-                    
-                    SecureField("Password", text: $password)
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
-                    
-                    Button(action: {
-                        // Sign in logic would go here
-                        // For now, just close the sheet
-                        onClose()
-                    }) {
-                        Text("Sign In")
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                    .padding(.top)
-                    
-                    Button("Forgot Password?") {
-                        // Forgot password logic would go here
-                    }
-                    .foregroundColor(.blue)
-                    .padding(.top, 5)
-                }
-                .padding(.horizontal)
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Sign In")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
-                        onClose()
-                    }
-                }
-            }
-        }
-    }
-}
-
 // Preview provider
 #Preview {
     InvoiceView()
+        .environmentObject(AuthService(mockUser: User(id: UUID(), email: "preview@example.com", firstName: "Preview", lastName: "User", createdAt: Date())))
+        .environmentObject(InvoiceService(mockInvoices: [], authService: MockAuthService()))
 }
