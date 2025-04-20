@@ -1,15 +1,19 @@
+// LEGACY CODE
+// NOT IN PRODUCTION
+
 import SwiftUI
 
-struct SignInView: View {
-    // Required properties
-    @State var email = ""
-    @State var password = ""
-    @State var isLoading = false
-    @State var errorMessage: String?
+struct SignUpView: View {
+    @State private var email = ""
+    @State private var firstName = ""
+    @State private var password = ""
+    @State private var isLoading = false
+    @State private var errorMessage: String?
     
-    // Optional environment object with default implementation for previews
-    @StateObject private var authModel = AuthViewModel()
+    // Environment
+    @EnvironmentObject var authService: AuthService
     
+    // Callback when the sheet should be dismissed
     var onClose: () -> Void
     
     var body: some View {
@@ -22,22 +26,29 @@ struct SignInView: View {
                     .frame(width: 120, height: 120)
                     .padding(.bottom, 20)
                 
-                Text("Welcome Back")
+                Text("Create Account")
                     .font(.title)
                     .fontWeight(.bold)
                 
                 // Error message
-                if let errorMessage = errorMessage {
+                if let errorMessage {
                     Text(errorMessage)
                         .foregroundColor(.red)
                         .padding(.horizontal)
                 }
                 
-                // Form fields
                 VStack(spacing: 15) {
                     TextField("Email", text: $email)
                         .autocapitalization(.none)
                         .keyboardType(.emailAddress)
+                        .disableAutocorrection(true)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
+                        .disabled(isLoading)
+                    
+                    TextField("First Name", text: $firstName)
+                        .autocapitalization(.words)
                         .disableAutocorrection(true)
                         .padding()
                         .background(Color(.systemGray6))
@@ -50,33 +61,40 @@ struct SignInView: View {
                         .cornerRadius(8)
                         .disabled(isLoading)
                     
-                    // Sign in button
-                    Button {
-                        signIn()
-                    } label: {
+                    // Sign‑up button
+                    Button(action: signUp) {
                         HStack {
                             if isLoading {
                                 ProgressView()
                             } else {
-                                Text("Sign In")
+                                Text("Sign Up")
                                     .fontWeight(.semibold)
                             }
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.green.opacity(isLoading ? 0.7 : 1.0))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .cornerRadius(10)
                     }
-                    .disabled(email.isEmpty || password.isEmpty || isLoading)
+                    .disabled(email.isEmpty || firstName.isEmpty || password.isEmpty || isLoading)
                     .padding(.top)
                     
-                    // Forgot password button
-                    Button("Forgot Password?") {
-                        // Forgot password logic would go here
+                    // Sign‑up with Google
+                    Button(action: signUpWithGoogle) {
+                        HStack {
+                            Image("google-icon")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 26, height: 26)
+                            Text("Sign Up with Google")
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color(.black))
+                        .cornerRadius(10)
                     }
-                    .foregroundColor(.blue)
-                    .padding(.top, 5)
                     .disabled(isLoading)
                 }
                 .padding(.horizontal)
@@ -84,7 +102,7 @@ struct SignInView: View {
                 Spacer()
             }
             .padding()
-            .navigationTitle("Sign In")
+            .navigationTitle("Sign Up")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -95,21 +113,14 @@ struct SignInView: View {
                 }
             }
         }
-        .onAppear {
-            // Setup environment if available
-            if let authService = try? AuthService() {
-                authModel.authService = authService
-            }
-        }
     }
     
-    private func signIn() {
+    private func signUp() {
         isLoading = true
         errorMessage = nil
-        
         Task {
             do {
-                try await authModel.signIn(email: email, password: password)
+                _ = try await authService.signUp(email: email, password: password, firstName: firstName)
                 await MainActor.run {
                     isLoading = false
                     onClose()
@@ -117,58 +128,33 @@ struct SignInView: View {
             } catch {
                 await MainActor.run {
                     isLoading = false
-                    errorMessage = "Failed to sign in: \(error.localizedDescription)"
+                    errorMessage = "Failed to sign up: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+    
+    private func signUpWithGoogle() {
+        isLoading = true
+        errorMessage = nil
+        Task {
+            do {
+                _ = try await authService.signInWithGoogle()
+                await MainActor.run {
+                    isLoading = false
+                    onClose()
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    errorMessage = "Google sign‑up failed: \(error.localizedDescription)"
                 }
             }
         }
     }
 }
 
-// MARK: - View Model
-// This isolates the AuthService dependency and makes previews safer
-class AuthViewModel: ObservableObject {
-    var authService: AuthService?
-    
-    func signIn(email: String, password: String) async throws -> User {
-        guard let authService = authService else {
-            // Fallback for previews or when service is unavailable
-            return User(
-                id: UUID(),
-                email: email, 
-                firstName: "Preview", 
-                lastName: "User",
-                createdAt: Date()
-            )
-        }
-        // tes
-        return try await authService.signIn(email: email, password: password)
-    }
-}
-
-// MARK: - Previews
-struct SignInView_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            // Default state
-            SignInView(onClose: {})
-                .previewDisplayName("Default")
-            
-            // Loading state
-            SignInView(
-                email: "user@example.com", 
-                password: "password123", 
-                isLoading: true,
-                onClose: {}
-            )
-            .previewDisplayName("Loading")
-            
-            // Error state
-            SignInView(
-                email: "user@example.com",
-                errorMessage: "Invalid credentials", 
-                onClose: {}
-            )
-            .previewDisplayName("Error")
-        }
-    }
+#Preview {
+    SignUpView(onClose: {})
+        .environmentObject(AuthService(mockUser: nil))
 } 
