@@ -6,30 +6,6 @@
 //
 
 //
-/*
-    Out of dade.
-    Current
-    V0.1 Q1 2025
-    
-    New
-    V0.2 Q2 2025
-    - Add Supabase Auth
-    - Add Supabase Database
-    - Add Supabase Storage
-    - Add Supabase Functions
-    - Add Supabase Realtime
-    - Add Supabase Edge Functions
-    - Add Supabase Notifications
-    - Add Supabase Email
-    - Add Supabase SMS
-
-
- 
- */
-
-
-
-
 
 
 
@@ -305,47 +281,106 @@ struct InvoiceDetailView: View {
     var body: some View {
         List {
             Section("Client Information") {
-                DetailRow(label: "Client", value: invoice.clientName)
-                DetailRow(label: "Invoice #", value: invoice.invoiceNumber)
+                DetailRow(label: "Client", value: invoice.clientName, icon: "person.fill")
+                DetailRow(label: "Invoice #", value: invoice.invoiceNumber, icon: "number")
             }
             
             Section("Amount") {
-                DetailRow(label: "Total", value: "$\(String(format: "%.2f", invoice.amount))")
-            }
-            
-            Section("Status") {
-                HStack {
-                    Text("Status")
-                    Spacer()
-                    Text(invoice.status.rawValue)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(statusColor.opacity(0.2))
-                        .foregroundColor(statusColor)
-                        .cornerRadius(8)
-                }
-            }
-            
-            Section("Dates") {
-                DetailRow(label: "Due Date", value: formattedDate(invoice.dueDate))
-                DetailRow(label: "Created On", value: formattedDate(invoice.createdDate))
+                DetailRow(label: "Total", value: "$\(String(format: "%.2f", invoice.amount))", icon: "dollarsign.circle.fill")
+                    .bold()
             }
             
             Section {
-                Button("Preview PDF") {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Status")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    Text(invoice.status.rawValue)
+                        .font(.headline)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(statusColor.opacity(0.2))
+                        .foregroundColor(statusColor)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(statusColor.opacity(0.5), lineWidth: 1)
+                        )
+                }
+                .padding(.vertical, 8)
+            } header: {
+                Text("Status")
+            }
+            
+            Section("Dates") {
+                DetailRow(label: "Due Date", value: formattedDate(invoice.dueDate), icon: "calendar")
+                DetailRow(label: "Created On", value: formattedDate(invoice.createdDate), icon: "clock")
+            }
+            
+            Section {
+                Button {
                     showingPDFPreview = true
+                } label: {
+                    HStack {
+                        Image(systemName: "doc.text.viewfinder")
+                            .foregroundColor(.white)
+                            .frame(width: 24, height: 24)
+                        Text("Preview PDF")
+                            .foregroundColor(.white)
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.blue)
+                    .cornerRadius(10)
                 }
+                .buttonStyle(PlainButtonStyle())
+                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
                 
-                Button("Download PDF") {
+                Button {
                     // PDF download functionality would go here
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.down.doc.fill")
+                            .foregroundColor(.white)
+                            .frame(width: 24, height: 24)
+                        Text("Download PDF")
+                            .foregroundColor(.white)
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.green)
+                    .cornerRadius(10)
                 }
+                .buttonStyle(PlainButtonStyle())
+                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
                 
-                Button("Send Invoice") {
+                Button {
                     // Email/sharing functionality would go here
+                } label: {
+                    HStack {
+                        Image(systemName: "paperplane.fill")
+                            .foregroundColor(.white)
+                            .frame(width: 24, height: 24)
+                        Text("Send Invoice")
+                            .foregroundColor(.white)
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.purple)
+                    .cornerRadius(10)
                 }
+                .buttonStyle(PlainButtonStyle())
+                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+            } header: {
+                Text("Actions")
             }
         }
         .navigationTitle("Invoice Details")
+        .listStyle(InsetGroupedListStyle())
         .sheet(isPresented: $showingPDFPreview) {
             PDFPreviewView(invoice: invoice)
         }
@@ -374,30 +409,305 @@ struct InvoiceDetailView: View {
 struct DetailRow: View {
     let label: String
     let value: String
+    let icon: String?
+    
+    init(label: String, value: String, icon: String? = nil) {
+        self.label = label
+        self.value = value
+        self.icon = icon
+    }
     
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
+            if let icon = icon {
+                Image(systemName: icon)
+                    .foregroundColor(.secondary)
+                    .frame(width: 20)
+            }
+            
             Text(label)
+                .foregroundColor(.primary)
+            
             Spacer()
+            
             Text(value)
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.trailing)
         }
+        .padding(.vertical, 4)
+    }
+    
+    func bold() -> some View {
+        return DetailRow(
+            label: self.label,
+            value: self.value,
+            icon: self.icon
+        )
+        .font(.headline)
     }
 }
 
 struct PDFPreviewView: View {
     let invoice: Invoice
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationStack {
-            VStack {
-                Text("PDF Preview Placeholder")
-                    .padding()
+            VStack(spacing: 0) {
+                // Header with invoice details
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Invoice #\(invoice.invoiceNumber)")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    
+                    Text(invoice.clientName)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    
+                    HStack {
+                        Text("Amount: $\(String(format: "%.2f", invoice.amount))")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                        
+                        Spacer()
+                        
+                        Text(invoice.status.rawValue)
+                            .font(.subheadline)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(statusColor.opacity(0.2))
+                            .foregroundColor(statusColor)
+                            .cornerRadius(8)
+                    }
+                    .padding(.top, 4)
+                }
+                .padding()
+                .background(Color(.systemGray6))
                 
-                Spacer()
+                // PDF Content - Placeholder with better mock display
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Company info
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("FROM")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text("Your Company Name")
+                                    .font(.headline)
+                                Text("123 Business Street")
+                                Text("City, State 12345")
+                                Text("contact@yourcompany.com")
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "doc.text.fill")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 60, height: 60)
+                                .foregroundColor(.secondary.opacity(0.3))
+                        }
+                        .padding(.bottom, 8)
+                        
+                        Divider()
+                        
+                        // Client info
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("BILL TO")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(invoice.clientName)
+                                .font(.headline)
+                            Text("Client Address")
+                            Text("client@example.com")
+                        }
+                        .padding(.vertical, 8)
+                        
+                        Divider()
+                        
+                        // Invoice details
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("INVOICE #")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text(invoice.invoiceNumber)
+                            }
+                            
+                            Spacer()
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("DATE")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text(formattedDate(invoice.createdDate))
+                            }
+                            
+                            Spacer()
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("DUE DATE")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text(formattedDate(invoice.dueDate))
+                            }
+                        }
+                        .padding(.vertical, 8)
+                        
+                        Divider()
+                        
+                        // Invoice items (mocked)
+                        VStack(spacing: 0) {
+                            HStack {
+                                Text("DESCRIPTION")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                Text("QTY")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 50, alignment: .trailing)
+                                
+                                Text("RATE")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 80, alignment: .trailing)
+                                
+                                Text("AMOUNT")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 80, alignment: .trailing)
+                            }
+                            .padding(.vertical, 8)
+                            .background(Color(.systemGray6))
+                            
+                            // Example line items
+                            ForEach(1...3, id: \.self) { index in
+                                HStack {
+                                    Text("Service \(index)")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    Text("1")
+                                        .frame(width: 50, alignment: .trailing)
+                                    
+                                    Text("$\(String(format: "%.2f", invoice.amount / 3.0))")
+                                        .frame(width: 80, alignment: .trailing)
+                                    
+                                    Text("$\(String(format: "%.2f", invoice.amount / 3.0))")
+                                        .frame(width: 80, alignment: .trailing)
+                                }
+                                .padding(.vertical, 12)
+                                .background(index % 2 == 0 ? Color.white : Color(.systemGray6).opacity(0.3))
+                            }
+                            
+                            // Total
+                            HStack {
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 12) {
+                                    HStack {
+                                        Text("Subtotal")
+                                            .frame(width: 100, alignment: .leading)
+                                        Text("$\(String(format: "%.2f", invoice.amount))")
+                                            .frame(width: 80, alignment: .trailing)
+                                    }
+                                    
+                                    HStack {
+                                        Text("Tax (0%)")
+                                            .frame(width: 100, alignment: .leading)
+                                        Text("$0.00")
+                                            .frame(width: 80, alignment: .trailing)
+                                    }
+                                    
+                                    HStack {
+                                        Text("Total")
+                                            .fontWeight(.bold)
+                                            .frame(width: 100, alignment: .leading)
+                                        Text("$\(String(format: "%.2f", invoice.amount))")
+                                            .fontWeight(.bold)
+                                            .frame(width: 80, alignment: .trailing)
+                                    }
+                                }
+                                .padding()
+                                .background(Color(.systemGray6).opacity(0.5))
+                                .cornerRadius(8)
+                            }
+                            .padding(.top, 20)
+                        }
+                        
+                        Spacer(minLength: 40)
+                        
+                        // Notes
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("NOTES")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text("Thank you for your business!")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.top, 8)
+                    }
+                    .padding()
+                }
             }
             .navigationTitle("Invoice PDF")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Done")
+                    }
+                }
+                
+                ToolbarItem(placement: .bottomBar) {
+                    HStack {
+                        Button {
+                            // Share functionality
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        
+                        Spacer()
+                        
+                        Button {
+                            // Print functionality
+                        } label: {
+                            Image(systemName: "printer")
+                        }
+                        
+                        Spacer()
+                        
+                        Button {
+                            // Download functionality
+                        } label: {
+                            Image(systemName: "arrow.down.doc")
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            }
+        }
+    }
+    
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: date)
+    }
+    
+    private var statusColor: Color {
+        switch invoice.status {
+        case .draft:
+            return .gray
+        case .sent:
+            return .blue
+        case .paid:
+            return .green
+        case .overdue:
+            return .red
         }
     }
 }
