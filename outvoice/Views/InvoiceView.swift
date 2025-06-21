@@ -23,6 +23,9 @@ struct InvoiceView: View {
     @State private var fetchError: String?
     @State private var operationError: String?
     
+    // it would be weird if iOS 26 breaks this app
+    
+    
     var body: some View {
         NavigationStack {
             VStack {
